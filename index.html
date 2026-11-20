@@ -479,9 +479,20 @@ function vehicleFor(c){
   const V = Store.data.vehicles || {};
   if(c.tu === "none") return null;
   if(c.tu && V[c.tu]) return V[c.tu];
-  const num = String(c.num||"").toLowerCase().trim(); if(num.length < 3) return null;
-  const hits = Object.values(V).filter(v => [v.name,v.serial,v.pin].join(" ").toLowerCase().includes(num));
-  return hits.length === 1 ? hits[0] : null;
+  return matchVehicle(c.num);
+}
+// Dopasowanie numeru auta do Trackunit: 1) identyczna nazwa/nr seryjny, 2) numer jako osobne słowo, 3) unikalny fragment
+function matchVehicle(numRaw){
+  const V = Object.values(Store.data.vehicles || {});
+  const norm = x => String(x||"").toLowerCase().replace(/\s+/g," ").trim();
+  const num = norm(numRaw); if(num.length < 2) return null;
+  let h = V.filter(v => [v.name,v.serial,v.pin].some(x => norm(x) === num || norm(x).replace(/\s/g,"") === num.replace(/\s/g,"")));
+  if(h.length === 1) return h[0];
+  h = V.filter(v => [v.name,v.serial,v.pin].some(x => norm(x).split(/[^a-z0-9ąćęłńóśźż]+/).includes(num)));
+  if(h.length === 1) return h[0];
+  if(num.length < 3) return null;
+  h = V.filter(v => [v.name,v.serial,v.pin].some(x => norm(x).includes(num)));
+  return h.length === 1 ? h[0] : null;
 }
 function carPos(c){
   const v = vehicleFor(c); if(!v) return null;
@@ -728,7 +739,9 @@ function openCar(id){
     <h3>${isNew ? "🚐 Nowe auto na placu" : "🚐 Auto " + esc(c.num)}</h3>
     <div class="bigcar" id="bigcar"></div>
     <label>Numer auta (np. 797, rejestracja, nr floty)</label>
-    <input type="text" id="f_num" value="${esc(c.num)}" maxlength="10" placeholder="np. 797">
+    <input type="text" id="f_num" value="${esc(c.num)}" maxlength="10" placeholder="tak jak w Trackunit, np. 797" list="tu_list" autocomplete="off">
+    <datalist id="tu_list">${Object.values(Store.data.vehicles||{}).map(v=>`<option value="${esc(v.name)}">${esc([v.serial,v.model].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
+    <div class="hint" id="tu_match"></div>
     <label>Ksywka auta</label>
     <div class="inrow"><input type="text" id="f_nick" value="${esc(c.nick||"")}" maxlength="24"><button class="btn" id="f_dice" title="Losuj">🎲</button></div>
     <label>Kolor</label>
@@ -749,7 +762,14 @@ function openCar(id){
       ${isNew ? "" : '<button class="btn danger" id="f_del">Usuń auto z placu</button>'}
     </div>`);
   draw();
-  $("#f_num").addEventListener("input", draw);
+  const showMatch = () => {
+    const n = $("#f_num").value.trim(), hasV = Object.keys(Store.data.vehicles||{}).length;
+    if(!n || !hasV){ $("#tu_match").innerHTML = hasV ? "" : "📡 Baza Trackunit jeszcze pusta — dopasuję automatycznie, gdy robot przyśle pojazdy."; return; }
+    const v = matchVehicle(n);
+    $("#tu_match").innerHTML = v ? `✅ Trackunit: <b>${esc(v.name)}</b>${v.serial?" · "+esc(v.serial):""}` : "❓ Nie ma takiego numeru w Trackunit (sprawdź pisownię albo wybierz pojazd ręcznie niżej)";
+  };
+  $("#f_num").addEventListener("input", () => { draw(); showMatch(); });
+  showMatch();
   if($("#f_office")) $("#f_office").onclick = async () => {
     const p = carPos(c);
     try{
