@@ -152,6 +152,20 @@ h2.sec small{font-family:Nunito,system-ui,sans-serif;font-size:13px;color:var(--
 body.noscroll{overflow:hidden}
 .spot .ago{margin-top:4px}
 .tcard .ago{margin-top:3px;line-height:1.35}
+.gps{font-size:11.5px;margin-top:4px;color:#bfe3ff}
+.gps span{color:var(--mut)}
+.nearcars{font-size:11px;margin-top:4px;color:#bfe3ff;font-weight:700}
+#map{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mpanel{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#1f3326}
+.mpanel svg{display:block;width:100%;height:auto}
+.mtitle{font-weight:900;font-size:13px;padding:6px 10px;background:rgba(0,0,0,.25)}
+.mrest{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.mrest .chip{border:none;cursor:pointer;font-size:12px}
+#map .mt,#map .mc{cursor:pointer}
+#map .rotor2{animation:spin 4s linear infinite}
+#map .mc:hover rect,#map .mt:hover circle:first-child{stroke:#ffd23f}
+select{width:100%;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);font:inherit;font-size:16px}
+a.btn{text-decoration:none;display:inline-block}
 footer{color:var(--mut);font-size:12px;text-align:center;margin-top:30px}
 footer a{color:var(--mut)}
 
@@ -169,6 +183,7 @@ footer a{color:var(--mut)}
   .spot:active,.tcard:active{transform:scale(.96)}
 }
 @media (max-width:600px){
+  #map{grid-template-columns:1fr}
   .wrap{padding:10px 10px calc(70px + env(safe-area-inset-bottom))}
   header{gap:8px}
   .brand .logo{font-size:30px}
@@ -245,6 +260,10 @@ footer a{color:var(--mut)}
   <h2 class="sec">🌀 Turbiny <small>kliknij turbinę → wskaż, gdzie jest jej permit</small></h2>
   <div class="tgrid" id="turbines"></div>
 
+  <h2 class="sec">🗺️ Mapa farmy <small>zielone = permit wpisany · auta z GPS Trackunit (co ~15 min)</small></h2>
+  <div id="map"></div>
+  <div class="hint" id="gpsinfo" style="margin-top:6px"></div>
+
   <h2 class="sec">📜 Kronika permitowa <small>kto, co, gdzie i kiedy</small></h2>
   <div class="log" id="log"></div>
 
@@ -267,6 +286,21 @@ const TURBINES = [
   ["WTG27","98307","027"]
 ];
 const TMAP = Object.fromEntries(TURBINES.map(t=>[t[0],t]));
+// Współrzędne turbin: WGS84 UTM 33N [Easting, Northing, lat, lon] (WTG11 – brak w tabeli)
+const TCOORD = {WTG01:[608082,5898883,53.228229,16.619123],WTG02:[608691,5898840,53.227718,16.628227],WTG03:[607899,5898520,53.225004,16.616260],WTG06:[607447,5898061,53.220971,16.609337],WTG07:[607109,5898328,53.223439,16.604366],WTG10:[595968,5893127,53.178830,16.435985],WTG12:[596366,5892585,53.173888,16.441775],WTG13:[596495,5892281,53.171132,16.443612],WTG14:[595406,5893038,53.178131,16.427552],WTG15:[595589,5892712,53.175169,16.430192],WTG16:[595759,5892256,53.171041,16.432598],WTG17:[594028,5893859,53.185755,16.407181],WTG18:[594806,5896500,53.209350,16.419605],WTG19:[595137,5897006,53.213837,16.424710],WTG20:[595008,5897314,53.216628,16.422871],WTG23:[591581,5898395,53.226944,16.371874],WTG24:[592617,5898398,53.226792,16.387389],WTG25:[592076,5898368,53.226616,16.379279],WTG26:[592418,5898112,53.224256,16.384326],WTG27:[592441,5897803,53.221475,16.384581]};
+const NEAR_M = 400;   // auto „stoi przy turbinie”, gdy jest bliżej niż tyle metrów
+function toUTM33(lat, lon){
+  const a=6378137, f=1/298.257223563, k0=0.9996, e2=f*(2-f), ep2=e2/(1-e2), r=Math.PI/180;
+  const p=lat*r, l=lon*r, l0=15*r, s=Math.sin(p), c=Math.cos(p), t=Math.tan(p);
+  const N=a/Math.sqrt(1-e2*s*s), T=t*t, C=ep2*c*c, A=c*(l-l0);
+  const M=a*((1-e2/4-3*e2*e2/64-5*e2**3/256)*p-(3*e2/8+3*e2*e2/32+45*e2**3/1024)*Math.sin(2*p)+(15*e2*e2/256+45*e2**3/1024)*Math.sin(4*p)-(35*e2**3/3072)*Math.sin(6*p));
+  const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+500000;
+  const Nn=k0*(M+N*t*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
+  return [E,Nn];
+}
+
+function nearestT(e,n){ let b=null; for(const [t,c] of Object.entries(TCOORD)){ const d=Math.hypot(c[0]-e,c[1]-n); if(!b||d<b.d) b={t,d}; } return b; }
+function fmtDist(d){ return d>=1000 ? (d/1000).toFixed(1).replace(".",",")+" km" : Math.round(d)+" m"; }
 const PLACES = {
   kontener:{emoji:"📦",label:"Kontener / biuro"},
   turbina:{emoji:"🌀",label:"Na turbinie (w pracy)"},
@@ -357,7 +391,7 @@ const Store = {
     this.base = this.url ? this.url + "/permitApp" : null;
   },
   get remote(){ return !!this.base; },
-  norm(d){ d = d || {}; d.cars = d.cars||{}; d.permits = d.permits||{}; d.log = d.log||{}; return d; },
+  norm(d){ d = d || {}; d.cars = d.cars||{}; d.permits = d.permits||{}; d.log = d.log||{}; d.vehicles = d.vehicles||{}; d.sites = d.sites||{}; d.vehiclesMeta = d.vehiclesMeta||{}; return d; },
   async load(){
     let d;
     if(this.remote){
@@ -441,6 +475,35 @@ function turbineSVG(){
 let Q = "";
 const cars = () => Object.entries(Store.data.cars).map(([id,c])=>({id,...c}))
   .sort((a,b)=>String(a.num).localeCompare(String(b.num),"pl",{numeric:true}));
+function vehicleFor(c){
+  const V = Store.data.vehicles || {};
+  if(c.tu === "none") return null;
+  if(c.tu && V[c.tu]) return V[c.tu];
+  const num = String(c.num||"").toLowerCase().trim(); if(num.length < 3) return null;
+  const hits = Object.values(V).filter(v => [v.name,v.serial,v.pin].join(" ").toLowerCase().includes(num));
+  return hits.length === 1 ? hits[0] : null;
+}
+function carPos(c){
+  const v = vehicleFor(c); if(!v) return null;
+  if(v.away || typeof v.lat !== "number") return {v, away:true};
+  const [e,n] = toUTM33(v.lat, v.lon);
+  return {v, e, n, near:nearestT(e,n), office:officeDist(e,n)};
+}
+const OFFICE_M = 300;
+function officeUTM(){ const b = Store.data.sites && Store.data.sites.biuro; return b && typeof b.lat==="number" ? toUTM33(b.lat,b.lon) : null; }
+function officeDist(e,n){ const o = officeUTM(); return o ? Math.hypot(o[0]-e, o[1]-n) : Infinity; }
+function posLabel(p){
+  if(!p) return "";
+  if(p.away) return "🏠 poza farmą";
+  if(p.office <= OFFICE_M) return "🏢 stoi przy <b>biurze</b>";
+  const d = p.near.d;
+  return d <= NEAR_M ? `📍 stoi przy <b>${p.near.t}</b>` : d <= 6000 ? `📍 ${fmtDist(d)} od ${p.near.t}` : `🛣️ w trasie (${fmtDist(d)} od ${p.near.t})`;
+}
+function carsNearMap(){
+  const m = {};
+  for(const c of cars()){ const p = carPos(c); if(p && !p.away && p.office > OFFICE_M && p.near.d <= NEAR_M) (m[p.near.t] = m[p.near.t] || []).push(c); }
+  return m;
+}
 const lastOf = ts => ts.map(t=>Store.data.permits[t]).sort((a,b)=>(b.at||0)-(a.at||0))[0];
 const permitsAt = loc => Object.entries(Store.data.permits).filter(([,p])=>p.loc===loc).map(([t])=>t).sort();
 function locLabel(loc){
@@ -458,17 +521,18 @@ function turbineMatch(tid, q){
   return hay.includes(q);
 }
 function carMatch(c, q){
-  const hay = [c.num, c.nick, ...permitsAt(c.id).map(t => TMAP[t] ? TMAP[t].join(" ") : t)].join(" ").toLowerCase();
+  const p = carPos(c);
+  const hay = [c.num, c.nick, p && !p.away && p.near.d <= NEAR_M ? p.near.t : "", p && p.office <= OFFICE_M ? "biuro" : "", ...permitsAt(c.id).map(t => TMAP[t] ? TMAP[t].join(" ") : t)].join(" ").toLowerCase();
   return hay.includes(q);
 }
 
 /* ================== RENDER ================== */
-function render(){ renderLot(); renderTurbines(); renderLog(); renderStatus(); }
+function render(){ renderLot(); renderTurbines(); renderMap(); renderLog(); renderStatus(); }
 
 function renderLot(){
   const q = Q;
   let h = cars().map(c=>{
-    const ts = permitsAt(c.id), hit = q && carMatch(c,q);
+    const ts = permitsAt(c.id), hit = q && carMatch(c,q), pos = carPos(c);
     return `<div class="spot ${hit?"hit":""} ${q&&!hit?"dim":""}" data-car="${esc(c.id)}" role="button" tabindex="0">
       ${ts.length ? `<div class="papers" title="${ts.length} permit(y)">📋${ts.length>1?"×"+ts.length:""}</div>` : ""}
       <div class="carbox">${carSVG(c.color, c.num, ts.length?"happy":"sad")}</div>
@@ -476,6 +540,7 @@ function renderLot(){
       <div class="nick">${esc(c.nick||"")}</div>
       <div class="chips">${ts.length ? ts.map(t=>`<span class="chip" title="${esc((Store.data.permits[t]||{}).by||"")}">${esc(t)}</span>`).join("") : '<span class="chip empty">pusto 🤷</span>'}</div>
       ${ts.length ? `<div class="ago">${kto(lastOf(ts))}</div>` : ""}
+      ${pos ? `<div class="gps">${posLabel(pos)}<span> · ${ago(pos.v.at)}</span></div>` : ""}
     </div>`;
   }).join("");
   h += Object.entries(PLACES).map(([k,pl])=>{
@@ -491,7 +556,7 @@ function renderLot(){
 }
 
 function renderTurbines(){
-  const q = Q;
+  const q = Q, near = carsNearMap();
   $("#turbines").innerHTML = TURBINES.map(([id,ser,no])=>{
     const p = Store.data.permits[id], c = p && Store.data.cars[p.loc];
     const hit = q && turbineMatch(id,q);
@@ -504,8 +569,75 @@ function renderTurbines(){
       <div class="tser">${ser} · ${no}</div>
       <div class="tloc">${where}</div>
       ${p ? `<div class="ago">${p.nr?"📄 "+esc(p.nr)+"<br>":""}${kto(p)}</div>` : ""}
+      ${near[id] ? `<div class="nearcars">📍 stoi tu: ${near[id].map(c=>"🚐"+esc(c.num)).join(" ")}</div>` : ""}
     </button>`;
   }).join("");
+}
+
+const SECTORS = [
+  ["🌲 Zachód", ["WTG23","WTG24","WTG25","WTG26","WTG27"]],
+  ["⛰️ Środek", ["WTG17","WTG18","WTG19","WTG20"]],
+  ["🌾 Południe", ["WTG10","WTG12","WTG13","WTG14","WTG15","WTG16"]],
+  ["🌅 Wschód", ["WTG01","WTG02","WTG03","WTG06","WTG07"]]
+];
+function renderMap(){
+  const list = cars().map(c=>({c, p:carPos(c)}));
+  const placed = new Set();
+  let html = "";
+  for(const [title, ts] of SECTORS){
+    const cs = ts.map(t=>TCOORD[t]), pad = 420;
+    let e0=Math.min(...cs.map(c=>c[0]))-pad, e1=Math.max(...cs.map(c=>c[0]))+pad;
+    let n0=Math.min(...cs.map(c=>c[1]))-pad, n1=Math.max(...cs.map(c=>c[1]))+pad;
+    if(e1-e0 < (n1-n0)*1.5){ const d=((n1-n0)*1.5-(e1-e0))/2; e0-=d; e1+=d; }
+    if(n1-n0 < (e1-e0)/2.4){ const d=((e1-e0)/2.4-(n1-n0))/2; n0-=d; n1+=d; }
+    const W=e1-e0, H=n1-n0, u=W/34, X=e=>e-e0, Y=n=>n1-n;
+    let g = `<rect width="${W}" height="${H}" fill="#1f3326"/>`;
+    for(let e=Math.ceil(e0/500)*500; e<e1; e+=500) g += `<line x1="${X(e)}" y1="0" x2="${X(e)}" y2="${H}" stroke="rgba(255,255,255,.06)" stroke-width="${u*.06}"/>`;
+    for(let n=Math.ceil(n0/500)*500; n<n1; n+=500) g += `<line x1="0" y1="${Y(n)}" x2="${W}" y2="${Y(n)}" stroke="rgba(255,255,255,.06)" stroke-width="${u*.06}"/>`;
+    for(const t of ts){
+      const c = TCOORD[t], p = Store.data.permits[t], blade = `<path d="M0 0 L${-u*.2} ${-u*1.5} L${u*.2} ${-u*1.5} Z" fill="#fff"/>`;
+      g += `<g class="mt" data-t="${t}" transform="translate(${X(c[0])},${Y(c[1])})">
+        <circle r="${u*1.7}" fill="transparent"/>
+        <circle r="${u*.95}" fill="${p?"#3ddc84":"#55606b"}" stroke="#111" stroke-width="${u*.18}"/>
+        <g class="rotor2">${blade}<g transform="rotate(120)">${blade}</g><g transform="rotate(240)">${blade}</g></g>
+        <circle r="${u*.28}" fill="#ffd23f"/>
+        <text x="${-u*1.15}" y="${u*.4}" text-anchor="end" font-size="${u*1.15}" font-weight="900" fill="#eef2f6" stroke="#111" stroke-width="${u*.25}" paint-order="stroke">${t.slice(3)}</text></g>`;
+    }
+    const stack = {}, ou = officeUTM();
+    const officeHere = ou && ts.includes(nearestT(ou[0],ou[1]).t) && nearestT(ou[0],ou[1]).d < 6000;
+    if(officeHere){
+      const ox = Math.max(u*2, Math.min(W-u*2, X(ou[0]))), oy = Math.max(u*1.5, Math.min(H-u, Y(ou[1])));
+      g += `<g transform="translate(${ox},${oy})"><rect x="${-u*1.2}" y="${-u*1.2}" width="${u*2.4}" height="${u*2.4}" rx="${u*.4}" fill="#4da3ff" stroke="#111" stroke-width="${u*.16}"/><text y="${u*.55}" text-anchor="middle" font-size="${u*1.5}">🏢</text><text y="${u*2.5}" text-anchor="middle" font-size="${u*.95}" font-weight="900" fill="#eef2f6" stroke="#111" stroke-width="${u*.22}" paint-order="stroke">BIURO</text></g>`;
+    }
+    for(const {c,p} of list){
+      if(!p || p.away) continue;
+      if(p.office <= OFFICE_M && officeHere){
+        placed.add(c.id);
+        const i = stack.office = (stack.office||0) + 1;
+        const ox2 = Math.max(u*2, Math.min(W-u*2, X(ou[0]))), x = ox2 + (ox2 > W-u*5 ? -u*3 : u*3), y = Math.max(u*1.5, Math.min(H-u, Y(ou[1]))) - u*.4 + (i-1)*u*1.9;
+        g += `<g class="mc" data-car="${esc(c.id)}" transform="translate(${x},${y})"><rect x="${-u*1.6}" y="${-u*.85}" width="${u*3.2}" height="${u*1.7}" rx="${u*.4}" fill="${c.color}" stroke="#111" stroke-width="${u*.16}"/><text y="${u*.42}" text-anchor="middle" font-size="${u*1.05}" font-weight="900" fill="#111">${esc(String(c.num).slice(0,5))}</text><circle cx="${-u*.9}" cy="${u*.9}" r="${u*.32}" fill="#222"/><circle cx="${u*.9}" cy="${u*.9}" r="${u*.32}" fill="#222"/></g>`;
+        continue;
+      }
+      if(!ts.includes(p.near.t) || p.near.d > 1500) continue;
+      placed.add(c.id);
+      let x = Math.max(u*2, Math.min(W-u*2, X(p.e))), y = Math.max(u*1.5, Math.min(H-u, Y(p.n)));
+      const k = p.near.d <= NEAR_M ? p.near.t : Math.round(x/(u*3))+":"+Math.round(y/(u*2));
+      const i = stack[k] = (stack[k]||0) + 1;
+      if(p.near.d <= NEAR_M){ const tc = TCOORD[p.near.t]; x = X(tc[0]) + u*2.6; y = Y(tc[1]) - u*0.4 + (i-1)*u*1.9; }
+      g += `<g class="mc" data-car="${esc(c.id)}" transform="translate(${x},${y})">
+        <rect x="${-u*1.6}" y="${-u*.85}" width="${u*3.2}" height="${u*1.7}" rx="${u*.4}" fill="${c.color}" stroke="#111" stroke-width="${u*.16}"/>
+        <text y="${u*.42}" text-anchor="middle" font-size="${u*1.05}" font-weight="900" fill="#111">${esc(String(c.num).slice(0,5))}</text>
+        <circle cx="${-u*.9}" cy="${u*.9}" r="${u*.32}" fill="#222"/><circle cx="${u*.9}" cy="${u*.9}" r="${u*.32}" fill="#222"/></g>`;
+    }
+    html += `<div class="mpanel"><div class="mtitle">${title}</div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${g}</svg></div>`;
+  }
+  const rest = list.filter(x=>x.p && !placed.has(x.c.id));
+  html += rest.length ? `<div class="mrest">${rest.map(({c,p})=>`<button class="chip" data-car="${esc(c.id)}">🚐 ${esc(c.num)} · ${p.away?"🏠 poza farmą":"🛣️ w trasie, "+fmtDist(p.near.d)+" od "+p.near.t}</button>`).join("")}</div>` : "";
+  $("#map").innerHTML = html;
+  const m = Store.data.vehiclesMeta || {}, matched = list.filter(x=>x.p).length;
+  $("#gpsinfo").innerHTML = m.upd
+    ? `📡 Trackunit: ${m.ok===false ? "⚠️ błąd ostatniej synchronizacji" : "OK"} · ostatnio ${kiedy(m.upd)} · pojazdów w Trackunit: ${m.count||0} · dopasowanych aut z placu: ${matched}${matched ? "" : " (otwórz auto → 📡 Trackunit)"}`
+    : "📡 Trackunit jeszcze nie przysłał pozycji — auta pojawią się na mapie, gdy robot GPS zacznie działać. WTG11 nie ma współrzędnych w tabeli.";
 }
 
 function renderLog(){
@@ -576,6 +708,15 @@ function openName(first){
 function needName(){ if(me()) return false; openName(true); return true; }
 
 /* --- auto: dodaj / edytuj + zaznacz turbiny --- */
+function tuSelect(c){
+  const V = Object.entries(Store.data.vehicles||{}).sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name),"pl",{numeric:true}));
+  const auto = c.tu ? null : vehicleFor(c);
+  return `<select id="f_tu">
+    <option value="">🤖 automatycznie po numerze${auto ? " → "+esc(auto.name||auto.serial) : ""}</option>
+    <option value="none" ${c.tu==="none"?"selected":""}>🚫 bez GPS</option>
+    ${V.map(([k,v])=>`<option value="${esc(k)}" ${c.tu===k?"selected":""}>${esc(v.name||"?")}${v.serial?" · "+esc(v.serial):""}${v.model?" · "+esc(v.model):""}</option>`).join("")}
+  </select>${V.length ? "" : '<div class="hint">Lista pojawi się, gdy robot Trackunit przyśle pierwsze pozycje.</div>'}`;
+}
 function openCar(id){
   if(needName()) return;
   const isNew = !id;
@@ -592,6 +733,10 @@ function openCar(id){
     <div class="inrow"><input type="text" id="f_nick" value="${esc(c.nick||"")}" maxlength="24"><button class="btn" id="f_dice" title="Losuj">🎲</button></div>
     <label>Kolor</label>
     <div class="colors">${COLORS.map(k=>`<button style="background:${k}" data-col="${k}" class="${k===c.color?"on":""}"></button>`).join("")}</div>
+    <label>📡 Trackunit (GPS)</label>
+    ${tuSelect(c)}
+    <div class="hint" id="tu_pos">${(()=>{ const p = carPos(c); return p ? posLabel(p)+" · "+ago(p.v.at) : ""; })()}</div>
+    ${(()=>{ const p = !isNew && carPos(c); return p && !p.away ? `<div class="row" style="margin-top:8px"><button class="btn" id="f_office">🏢 Tu jest biuro — zapamiętaj to miejsce</button></div>` : ""; })()}
     <label>📋 Permity których turbin są w tym aucie? (klikaj, można kilka)</label>
     <div class="tpick">${TURBINES.map(([t,ser])=>{
       const p = Store.data.permits[t], elsewhere = p && p.loc !== id;
@@ -605,6 +750,14 @@ function openCar(id){
     </div>`);
   draw();
   $("#f_num").addEventListener("input", draw);
+  if($("#f_office")) $("#f_office").onclick = async () => {
+    const p = carPos(c);
+    try{
+      await Store.set("sites/biuro", {lat:p.v.lat, lon:p.v.lon, by:me(), at:Date.now()});
+      await Store.log({type:"txt", txt:`${me()}: 🏢 biuro oznaczone tam, gdzie stoi Auto ${c.num}`});
+      closeModal(); render(); toast("Biuro zapamiętane 🏢 Teraz każdy wie, gdzie jest kawa ☕");
+    }catch(err){ toast("Ups 😵 " + err.message); }
+  };
   $("#f_dice").onclick = () => { $("#f_nick").value = rnd(NICKS); };
   $("#modal").querySelectorAll("[data-col]").forEach(b => b.onclick = () => {
     c.color = b.dataset.col; $("#modal").querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on", x===b)); draw();
@@ -618,7 +771,7 @@ function openCar(id){
     const by = saveWho();
     const cid = id || uid("c");
     try{
-      await Store.set("cars/"+cid, {num, nick:$("#f_nick").value.trim(), color:c.color, at:Date.now()});
+      await Store.set("cars/"+cid, {num, nick:$("#f_nick").value.trim(), color:c.color, tu:$("#f_tu").value, at:Date.now()});
       if(isNew) await Store.log({type:"car", num, by});
       const before = new Set(isNew ? [] : permitsAt(cid));
       let added = 0;
@@ -661,6 +814,7 @@ function openTurbine(tid){
   openModal(`
     <h3>🌀 ${tid} <span style="font-family:Nunito,sans-serif;font-size:14px;color:var(--mut)">${t[1]} · ${t[2]}</span></h3>
     <div class="note">Teraz: <b>${p.loc ? esc(locLabel(p.loc)) : "nikt nie wie 🙈"}</b>${p.at?`<br><span class="hint">przypisał(a) ${kto(p)}</span>`:""}${p.note?`<br>📝 ${esc(p.note)}`:""}</div>
+    ${TCOORD[tid] ? `<div class="row" style="margin-top:8px"><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${TCOORD[tid][2]},${TCOORD[tid][3]}">🧭 Nawiguj do ${tid}</a>${(carsNearMap()[tid]||[]).length ? `<span class="hint" style="align-self:center">📍 przy turbinie stoi: ${carsNearMap()[tid].map(c=>"🚐 "+esc(c.num)).join(", ")}</span>` : ""}</div>` : ""}
     <label>Gdzie jest permit tej turbiny? 👇</label>
     <div class="lpick">
       ${cs.map(c=>`<button data-loc="${esc(c.id)}" class="${sel===c.id?"on":""}">${carSVG(c.color,c.num)}Auto ${esc(c.num)}<small>${esc(c.nick||"")}</small></button>`).join("")}
@@ -810,6 +964,10 @@ $("#lot").addEventListener("click", e=>{
   else if(s.dataset.place) openPlace(s.dataset.place);
 });
 $("#lot").addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.closest(".spot")) e.target.click(); });
+$("#map").addEventListener("click", e=>{
+  const c = e.target.closest("[data-car]"); if(c) return openCar(c.dataset.car);
+  const t = e.target.closest("[data-t]"); if(t) openTurbine(t.dataset.t);
+});
 $("#turbines").addEventListener("click", e=>{ const b = e.target.closest("[data-t]"); if(b) openTurbine(b.dataset.t); });
 $("#q").addEventListener("input", e=>{ Q = e.target.value.trim().toLowerCase(); renderLot(); renderTurbines(); });
 $("#btnPanic").onclick = openPanic;

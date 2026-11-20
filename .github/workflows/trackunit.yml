@@ -1,0 +1,34 @@
+name: Trackunit → pozycje aut
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # Trackunit pozwala pobrać snapshot floty raz na 15 min
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trackunit-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pobierz pozycje z Trackunit i zapisz w bazie
+        run: node scripts/trackunit-sync.mjs
+        env:
+          TU_CLIENT_ID: ${{ secrets.TU_CLIENT_ID }}
+          TU_CLIENT_SECRET: ${{ secrets.TU_CLIENT_SECRET }}
+          TU_USERNAME: ${{ secrets.TU_USERNAME }}
+          TU_PASSWORD: ${{ secrets.TU_PASSWORD }}
+          FIREBASE_URL: https://permit-game-walcz-default-rtdb.europe-west1.firebasedatabase.app
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET }}
+          FIREBASE_SA_JSON: ${{ secrets.FIREBASE_SA_JSON }}
+          FARM_RADIUS_KM: "15"
