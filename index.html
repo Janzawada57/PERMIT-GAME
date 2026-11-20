@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#14181d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Permit?!">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Gdzie jest PERMIT?! – FW Wałcz</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -142,6 +148,10 @@ h2.sec small{font-family:Nunito,system-ui,sans-serif;font-size:13px;color:var(--
 .drive .paper{position:absolute;top:-18px;left:70px;font-size:34px;animation:flap .2s infinite alternate}
 .puff{position:fixed;bottom:80px;width:26px;height:26px;border-radius:50%;background:#bbb;opacity:.7;z-index:69;pointer-events:none;animation:puff .9s ease-out forwards}
 
+.status.me{cursor:pointer;font-weight:900;color:var(--yel)}
+body.noscroll{overflow:hidden}
+.spot .ago{margin-top:4px}
+.tcard .ago{margin-top:3px;line-height:1.35}
 footer{color:var(--mut);font-size:12px;text-align:center;margin-top:30px}
 footer a{color:var(--mut)}
 
@@ -154,13 +164,54 @@ footer a{color:var(--mut)}
 @keyframes driveby{from{transform:translateX(-220px)}to{transform:translateX(calc(100vw + 40px))}}
 @keyframes flap{to{transform:rotate(-14deg) translateY(-4px)}}
 @keyframes puff{to{transform:scale(2.6) translateX(-30px);opacity:0}}
-@media (max-width:520px){
-  .lot-grid{grid-template-columns:repeat(2,1fr);gap:9px}
-  .lot{background:var(--asphalt)}
-  .spot .carbox{height:64px}
-  .tgrid{grid-template-columns:repeat(3,1fr)}
-  .status{order:3}
+@media (hover:none){
+  .spot:hover,.tcard:hover{transform:none}
+  .spot:active,.tcard:active{transform:scale(.96)}
 }
+@media (max-width:600px){
+  .wrap{padding:10px 10px calc(70px + env(safe-area-inset-bottom))}
+  header{gap:8px}
+  .brand .logo{font-size:30px}
+  .brand h1{font-size:23px}
+  .brand .sub{font-size:11.5px}
+  .hdr-r{width:100%}
+  .hdr-r .status{font-size:11.5px;padding:6px 9px}
+  .panic{flex:1;padding:12px 10px;font-size:15px}
+  .ticker{font-size:12.5px;padding:6px 10px;margin:8px 0}
+  .ticker b{display:none}
+  .search{position:sticky;top:0;z-index:20;margin:0 -10px 10px;padding:8px 10px;background:var(--bg)}
+  .search input{padding:11px 12px}
+  h2.sec{font-size:16px;margin:16px 0 8px}
+  h2.sec small{flex-basis:100%;font-size:12px}
+  .lot{padding:16px 8px 12px;border-radius:14px}
+  .lot::before{width:28px;height:28px;font-size:20px;line-height:28px;right:8px;top:6px}
+  .lot-grid{grid-template-columns:repeat(2,1fr);gap:9px}
+  .spot{padding:8px 4px}
+  .spot .carbox{height:62px}
+  .spot .nm{font-size:14px}
+  .spot.add{min-height:150px}
+  .spot.place .emo{font-size:40px;line-height:62px;height:62px}
+  .tgrid{grid-template-columns:repeat(3,1fr);gap:7px}
+  .tcard{padding:7px 3px 8px}
+  .tcard svg.tb{width:36px;height:42px}
+  .tname{font-size:14px}
+  .tloc{font-size:11px;flex-wrap:wrap}
+  .tloc svg{width:36px;height:22px}
+  .ago{font-size:10px}
+  .log div{font-size:13px}
+  /* modal jako arkusz od dołu */
+  .ovl{padding:0;align-items:flex-end}
+  .modal{border-radius:20px 20px 0 0;max-height:92vh;max-height:92dvh;overflow:auto;padding:16px 14px calc(18px + env(safe-area-inset-bottom));border-bottom:none;animation:sheet .25s ease-out}
+  .modal h3{font-size:18px}
+  .bigcar{height:90px}
+  .tpick{grid-template-columns:repeat(3,1fr)}
+  .tpick button{padding:10px 2px}
+  .lpick{grid-template-columns:repeat(3,1fr)}
+  .row .btn{flex:1;padding:14px 10px}
+  .toast{bottom:calc(16px + env(safe-area-inset-bottom));font-size:14px}
+  .drive{bottom:120px;transform-origin:left}
+}
+@keyframes sheet{from{transform:translateY(60%)}}
 </style>
 </head>
 <body>
@@ -174,10 +225,11 @@ footer a{color:var(--mut)}
       </div>
     </div>
     <div class="hdr-r">
+      <button class="status me" id="btnMe" title="Zmień imię">👷 …</button>
       <span class="status" id="status">⏳ ładuję…</span>
       <button class="icobtn" id="btnSound" title="Dźwięk">🔊</button>
       <button class="icobtn" id="btnSettings" title="Ustawienia wspólnej bazy">⚙️</button>
-      <button class="panic" id="btnPanic">😱 NIE WIEM GDZIE JEST!</button>
+      <button class="panic" id="btnPanic">😱 <span>NIE WIEM GDZIE JEST!</span></button>
     </div>
   </header>
 
@@ -279,6 +331,17 @@ const ls = {
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
 const me = () => ls.get("permit_who","");
+function kiedy(ts){
+  if(!ts) return "";
+  const d = new Date(ts), n = new Date();
+  const t = d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"});
+  const days = Math.round((new Date(n.toDateString()) - new Date(d.toDateString()))/86400000);
+  if(days === 0) return "dziś " + t;
+  if(days === 1) return "wczoraj " + t;
+  const o = {day:"2-digit",month:"2-digit"}; if(d.getFullYear() !== n.getFullYear()) o.year = "numeric";
+  return d.toLocaleDateString("pl-PL",o) + " " + t;
+}
+const kto = p => p && p.by ? `👤 <b>${esc(p.by)}</b> · ${kiedy(p.at)}` : (p && p.at ? kiedy(p.at) : "");
 
 /* ================== MAGAZYN (Firebase REST albo lokalnie) ================== */
 const Store = {
@@ -378,6 +441,7 @@ function turbineSVG(){
 let Q = "";
 const cars = () => Object.entries(Store.data.cars).map(([id,c])=>({id,...c}))
   .sort((a,b)=>String(a.num).localeCompare(String(b.num),"pl",{numeric:true}));
+const lastOf = ts => ts.map(t=>Store.data.permits[t]).sort((a,b)=>(b.at||0)-(a.at||0))[0];
 const permitsAt = loc => Object.entries(Store.data.permits).filter(([,p])=>p.loc===loc).map(([t])=>t).sort();
 function locLabel(loc){
   if(PLACES[loc]) return PLACES[loc].emoji + " " + PLACES[loc].label;
@@ -410,7 +474,8 @@ function renderLot(){
       <div class="carbox">${carSVG(c.color, c.num, ts.length?"happy":"sad")}</div>
       <div class="nm">Auto ${esc(c.num)}</div>
       <div class="nick">${esc(c.nick||"")}</div>
-      <div class="chips">${ts.length ? ts.map(t=>`<span class="chip">${esc(t)}</span>`).join("") : '<span class="chip empty">pusto 🤷</span>'}</div>
+      <div class="chips">${ts.length ? ts.map(t=>`<span class="chip" title="${esc((Store.data.permits[t]||{}).by||"")}">${esc(t)}</span>`).join("") : '<span class="chip empty">pusto 🤷</span>'}</div>
+      ${ts.length ? `<div class="ago">${kto(lastOf(ts))}</div>` : ""}
     </div>`;
   }).join("");
   h += Object.entries(PLACES).map(([k,pl])=>{
@@ -438,7 +503,7 @@ function renderTurbines(){
       <div class="tname">${id}</div>
       <div class="tser">${ser} · ${no}</div>
       <div class="tloc">${where}</div>
-      ${p ? `<div class="ago">${p.nr?"📄 "+esc(p.nr)+" · ":""}${ago(p.at)}${p.by?" · "+esc(p.by):""}</div>` : ""}
+      ${p ? `<div class="ago">${p.nr?"📄 "+esc(p.nr)+"<br>":""}${kto(p)}</div>` : ""}
     </button>`;
   }).join("");
 }
@@ -453,7 +518,7 @@ function renderLog(){
     else if(e.type==="car") txt = `${who}: na plac wjechało <b>Auto ${esc(e.num)}</b> 🚐💨`;
     else if(e.type==="cardel") txt = `${who}: <b>Auto ${esc(e.num)}</b> odjechało w siną dal 👋`;
     else txt = esc(e.txt||"");
-    return `<div><time>${hhmm(e.at)}</time>${txt}</div>`;
+    return `<div><time>${kiedy(e.at)}</time>${txt}</div>`;
   }).join("") : '<div class="hint">Cisza jak na farmie przy flaucie. Wpisz pierwszy permit! 🌬️</div>';
 }
 
@@ -466,22 +531,53 @@ function renderStatus(){
 }
 
 /* ================== MODALE ================== */
-function openModal(html){
-  $("#modal").innerHTML = `<button class="x" data-close>✕</button>` + html;
+let modalLocked = false;
+function openModal(html, locked=false){
+  modalLocked = locked;
+  $("#modal").innerHTML = (locked ? "" : `<button class="x" data-close>✕</button>`) + html;
   $("#ovl").classList.add("open");
+  document.body.classList.add("noscroll");
+  $("#modal").scrollTop = 0;
 }
-function closeModal(){ $("#ovl").classList.remove("open"); $("#modal").innerHTML = ""; }
+function closeModal(force){
+  if(modalLocked && !force) return;
+  modalLocked = false;
+  $("#ovl").classList.remove("open"); $("#modal").innerHTML = ""; document.body.classList.remove("noscroll");
+}
 $("#ovl").addEventListener("click", e=>{ if(e.target.id==="ovl" || e.target.closest("[data-close]")) closeModal(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
 const modalOpen = () => $("#ovl").classList.contains("open");
 
 function whoField(){
-  return `<label>Kto wpisuje? (zapamiętam)</label><input type="text" id="f_who" value="${esc(me())}" placeholder="Twoje imię, np. Janek">`;
+  return `<p class="hint" style="margin-top:14px">Zapisze się jako: <b>👷 ${esc(me())}</b> · ${kiedy(Date.now())}</p>`;
 }
-function saveWho(){ const w = ($("#f_who")?.value||"").trim(); if(w) ls.set("permit_who", w); return w; }
+function saveWho(){ return me(); }
+
+/* --- imię / ksywa (obowiązkowe) --- */
+function renderMe(){ $("#btnMe").textContent = "👷 " + (me() || "kto ty?"); }
+function openName(first){
+  openModal(`
+    <h3>${first ? "🛑 STÓJ! KTO IDZIE?" : "👷 Zmiana tożsamości"}</h3>
+    <p>${first ? "Zanim dotkniesz permitów, przedstaw się. Każdy wpis będzie podpisany Twoim imieniem i datą — żeby było wiadomo, kogo pytać 😉" : "Podpisujesz się jako ktoś inny? Spoko, zdarza się."}</p>
+    <label>Imię albo ksywa</label>
+    <input type="text" id="f_name" maxlength="20" value="${esc(me())}" placeholder="np. Janek, Szwagier, Bocian" autocomplete="nickname" enterkeyhint="go">
+    <div class="row"><button class="btn primary" id="f_nameok">${first ? "Wchodzę 💪" : "Zapisz 💾"}</button></div>
+    <p class="hint">Bez logowania i haseł — tylko podpis. Zapamiętam go na tym telefonie.</p>`, first);
+  const go = () => {
+    const v = $("#f_name").value.trim().replace(/\s+/g," ");
+    if(v.length < 2){ $("#f_name").classList.add("shake"); setTimeout(()=>$("#f_name").classList.remove("shake"),400); toast("Minimum 2 literki. Nawet „Zbychu” się zmieści 😄"); return; }
+    ls.set("permit_who", v); renderMe(); closeModal(true);
+    toast(first ? `Siema ${v}! 👋 Nie zgub permitu 😉` : `Od teraz jesteś: ${v} 🕶️`); honk(1);
+  };
+  $("#f_nameok").onclick = go;
+  $("#f_name").addEventListener("keydown", e=>{ if(e.key==="Enter") go(); });
+  setTimeout(()=>$("#f_name").focus(), 150);
+}
+function needName(){ if(me()) return false; openName(true); return true; }
 
 /* --- auto: dodaj / edytuj + zaznacz turbiny --- */
 function openCar(id){
+  if(needName()) return;
   const isNew = !id;
   const c = isNew ? {num:"", nick:rnd(NICKS), color:rnd(COLORS)} : {...Store.data.cars[id]};
   if(!c) return;
@@ -558,12 +654,13 @@ function openCar(id){
 
 /* --- turbina: gdzie jest jej permit --- */
 function openTurbine(tid){
+  if(needName()) return;
   const t = TMAP[tid], p = Store.data.permits[tid] || {};
   let sel = p.loc || null;
   const cs = cars();
   openModal(`
     <h3>🌀 ${tid} <span style="font-family:Nunito,sans-serif;font-size:14px;color:var(--mut)">${t[1]} · ${t[2]}</span></h3>
-    <div class="note">Teraz: <b>${p.loc ? esc(locLabel(p.loc)) : "nikt nie wie 🙈"}</b>${p.at?` <span class="hint">· ${ago(p.at)}${p.by?", wpisał(a) "+esc(p.by):""}</span>`:""}${p.note?`<br>📝 ${esc(p.note)}`:""}</div>
+    <div class="note">Teraz: <b>${p.loc ? esc(locLabel(p.loc)) : "nikt nie wie 🙈"}</b>${p.at?`<br><span class="hint">przypisał(a) ${kto(p)}</span>`:""}${p.note?`<br>📝 ${esc(p.note)}`:""}</div>
     <label>Gdzie jest permit tej turbiny? 👇</label>
     <div class="lpick">
       ${cs.map(c=>`<button data-loc="${esc(c.id)}" class="${sel===c.id?"on":""}">${carSVG(c.color,c.num)}Auto ${esc(c.num)}<small>${esc(c.nick||"")}</small></button>`).join("")}
@@ -610,7 +707,7 @@ function openPlace(k){
   const ts = permitsAt(k), pl = PLACES[k];
   openModal(`<h3>${pl.emoji} ${esc(pl.label)}</h3>
     ${ts.length ? ts.map(t=>{ const p = Store.data.permits[t];
-      return `<div class="note"><b>${t}</b>${p.nr?" · 📄 "+esc(p.nr):""} <span class="hint">· ${ago(p.at)}${p.by?", "+esc(p.by):""}</span>${p.note?"<br>📝 "+esc(p.note):""}
+      return `<div class="note"><b>${t}</b>${p.nr?" · 📄 "+esc(p.nr):""} <br><span class="hint">przypisał(a) ${kto(p)}</span>${p.note?"<br>📝 "+esc(p.note):""}
       <div class="row" style="margin-top:6px"><button class="btn" data-open="${t}">Przenieś / zmień</button></div></div>`; }).join("")
       : '<p class="hint">Pusto. Nawet kurz się nudzi.</p>'}
     <p class="hint">Żeby coś tu dodać — kliknij turbinę na liście poniżej placu i wybierz „${esc(pl.label)}”.</p>`);
@@ -716,6 +813,7 @@ $("#lot").addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.closes
 $("#turbines").addEventListener("click", e=>{ const b = e.target.closest("[data-t]"); if(b) openTurbine(b.dataset.t); });
 $("#q").addEventListener("input", e=>{ Q = e.target.value.trim().toLowerCase(); renderLot(); renderTurbines(); });
 $("#btnPanic").onclick = openPanic;
+$("#btnMe").onclick = () => openName(false);
 $("#btnSettings").onclick = openSettings;
 $("#btnSound").onclick = () => { soundOn = !soundOn; ls.set("permit_sound", soundOn?"1":"0"); setSoundIcon(); if(soundOn) honk(1); };
 $("#lnkShare").onclick = e => { e.preventDefault(); copy(shareLink()); };
@@ -726,9 +824,9 @@ async function tick(force){
   try{ const ch = await Store.load(); if(ch || force) render(); else { renderStatus(); renderTurbines(); } }
   catch(e){ Store.online = false; renderStatus(); }
 }
-Store.init(); setSoundIcon(); rotateTip(); setInterval(rotateTip, 9000);
+Store.init(); setSoundIcon(); renderMe(); rotateTip(); setInterval(rotateTip, 9000);
 render();
-tick(true);
+tick(true).then(()=>{ if(!me()) openName(true); });
 setInterval(()=>{ if(document.visibilityState === "visible") tick(false); }, 5000);
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") tick(false); });
 </script>

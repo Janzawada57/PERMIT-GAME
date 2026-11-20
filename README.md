@@ -7,13 +7,19 @@
 - 🔍 **Szukajka** – wpisz `WTG12`, `98314`, `797` albo nr permitu → apka podświetli, gdzie to jest.
 - 😱 **Przycisk paniki** – lista „co gdzie jest” + słowa otuchy.
 - 📜 **Kronika** – kto, co i kiedy przeniósł.
+- 👷 **Podpis** – przy wejściu każdy podaje imię/ksywę; każdy permit pokazuje, kto i kiedy (dzień + godzina) go przypisał.
+- 📱 Na telefonie: „Dodaj do ekranu głównego” → działa jak aplikacja.
 - 🔊 Klakson przy zapisie (można wyciszyć).
 
 Działa w przeglądarce na telefonie i komputerze, bez instalowania czegokolwiek.
 
 ---
 
-## 🔌 Wspólna baza (żeby wszyscy widzieli to samo) – 5 minut, za darmo
+## 🔌 Wspólna baza
+
+✅ **Już podpięta:** Firebase projekt `permit-game-walcz` (Belgia, europe-west1), adres w `config.js`. Poniżej instrukcja, gdyby trzeba było założyć nową.
+
+### Jak założyć od zera (5 minut, za darmo)
 
 GitHub Pages hostuje tylko stronę, więc wpisy muszą gdzieś być zapisywane wspólnie. Używamy darmowej **Firebase Realtime Database**.
 Bez tego apka działa w **trybie lokalnym** (każdy telefon widzi tylko swoje wpisy).
@@ -24,8 +30,12 @@ Bez tego apka działa w **trybie lokalnym** (każdy telefon widzi tylko swoje wp
    ```json
    {
      "rules": {
-       "permitApp": { ".read": true, ".write": true },
-       "$other": { ".read": false, ".write": false }
+       "permitApp": {
+         ".read": true,
+         "cars":    { "$id": { ".write": true } },
+         "permits": { "$t":  { ".write": "$t.matches(/^WTG[0-9]{2}$/)" } },
+         "log":     { "$id": { ".write": true } }
+       }
      }
    }
    ```
@@ -43,4 +53,5 @@ Bez tego apka działa w **trybie lokalnym** (każdy telefon widzi tylko swoje wp
 |---|---|
 | `index.html` | cała aplikacja |
 | `config.js` | adres wspólnej bazy |
+| `manifest.webmanifest`, `icon-*.png` | ikona i tryb aplikacji na telefonie |
 | `.nojekyll` | żeby GitHub Pages nic nie kombinował |
