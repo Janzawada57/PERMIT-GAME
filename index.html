@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14181d">
+<title>Gdzie jest PERMIT?! – FW Wałcz</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#14181d; --panel:#1d232a; --card:#262d35; --line:#353e48; --txt:#eef2f6; --mut:#9aa6b2;
+  --yel:#ffd23f; --org:#ff8a3d; --red:#ff5a5f; --grn:#3ddc84; --blu:#4da3ff;
+  --asphalt:#2b2f33;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Nunito,system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+input{font:inherit}
+.wrap{max-width:1400px;margin:0 auto;padding:14px 14px 80px}
+
+/* ---------- HEADER ---------- */
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .logo{font-size:40px;animation:wobble 2.6s ease-in-out infinite}
+.brand h1{font-family:Bungee,Nunito,sans-serif;font-size:clamp(22px,4vw,36px);margin:0;line-height:1;color:var(--yel);text-shadow:3px 3px 0 #000}
+.brand .sub{color:var(--mut);font-size:13px;margin-top:4px}
+.hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.status{font-size:12px;padding:6px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
+.icobtn{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 11px;font-size:18px}
+.icobtn:hover{border-color:var(--yel)}
+.panic{background:var(--red);border:none;border-radius:14px;padding:10px 16px;font-weight:900;box-shadow:0 4px 0 #9c2226;animation:pulse 1.8s infinite}
+.panic:active{transform:translateY(3px);box-shadow:0 1px 0 #9c2226}
+
+.ticker{margin:12px 0;background:var(--yel);color:#111;border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;overflow:hidden}
+.ticker b{white-space:nowrap}
+.ticker span{transition:opacity .4s}
+
+.search{display:flex;gap:8px;margin:10px 0 16px}
+.search input{flex:1;min-width:0;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--txt);font-size:16px}
+.search input:focus{outline:none;border-color:var(--yel)}
+
+h2.sec{font-family:Bungee,sans-serif;font-weight:400;font-size:18px;margin:22px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2.sec small{font-family:Nunito,system-ui,sans-serif;font-size:13px;color:var(--mut);font-weight:700}
+
+/* ---------- PARKING LOT ---------- */
+.lot{position:relative;background:var(--asphalt);
+  border-radius:18px;padding:22px 12px 18px;border:3px dashed #555;overflow:hidden}
+.lot::before{content:"P";position:absolute;right:14px;top:10px;width:38px;height:38px;border-radius:8px;background:var(--blu);color:#fff;font:900 28px/38px Nunito;text-align:center;opacity:.9}
+.lot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.spot{position:relative;background:rgba(0,0,0,.14);border:3px solid rgba(255,255,255,.85);border-top:none;border-radius:0 0 6px 6px;padding:10px 8px 10px;text-align:center;transition:transform .15s}
+.spot:hover{transform:translateY(-3px) rotate(-1deg);border-color:var(--yel);background:rgba(255,210,63,.08)}
+.spot.hit{border-color:var(--yel);box-shadow:0 0 0 4px rgba(255,210,63,.35);animation:bounce .6s infinite alternate}
+.spot.dim{opacity:.3}
+.spot .carbox{position:relative;height:84px}
+.spot .carbox svg{width:100%;height:100%}
+.spot:hover .wheel{animation:spin .5s linear infinite}
+.spot .nm{font-weight:900;font-size:15px;margin-top:2px}
+.spot .nick{color:var(--mut);font-size:12px;min-height:16px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:7px;min-height:24px}
+.chip{background:#fff;color:#111;font-weight:900;font-size:11px;padding:3px 7px;border-radius:6px;box-shadow:2px 2px 0 rgba(0,0,0,.4);transform:rotate(-3deg)}
+.chip:nth-child(even){transform:rotate(3deg);background:#fff7d1}
+.chip.empty{background:transparent;color:var(--mut);box-shadow:none;transform:none;font-weight:700}
+.papers{position:absolute;top:-4px;right:6px;font-size:22px;filter:drop-shadow(2px 2px 0 #000)}
+.spot.add{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;border-style:dashed;color:var(--yel);font-weight:900;background:transparent;cursor:pointer}
+.spot.add .plus{font-size:44px;line-height:1}
+.spot.place{background:rgba(77,163,255,.08)}
+.spot.place .emo{font-size:52px;line-height:84px;height:84px}
+
+/* ---------- TURBINES ---------- */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.tcard{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:8px 6px 9px;text-align:center;position:relative}
+.tcard:hover{border-color:var(--yel)}
+.tcard.has{border-color:#3d6b4f;background:linear-gradient(180deg,#24352c,var(--card))}
+.tcard.hit{border-color:var(--yel);box-shadow:0 0 0 4px rgba(255,210,63,.35);animation:bounce .6s infinite alternate}
+.tcard.dim{opacity:.3}
+.tcard svg.tb{width:44px;height:52px;display:block;margin:0 auto}
+.rotor{transform-origin:22px 16px;animation:spin 6s linear infinite}
+.tcard.has .rotor{animation-duration:1.4s}
+.tname{font-weight:900;font-size:15px}
+.tser{font-size:11px;color:var(--mut)}
+.tloc{margin-top:5px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;min-height:28px}
+.tloc svg{width:44px;height:26px}
+.tloc .none{color:var(--mut);font-weight:400}
+.ago{font-size:10.5px;color:var(--mut)}
+.here{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--yel);color:#111;font-weight:900;font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+
+/* ---------- LOG ---------- */
+.log{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 12px;max-height:340px;overflow:auto}
+.log div{padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.log div:last-child{border:none}
+.log time{color:var(--mut);font-size:12px;margin-right:6px}
+
+/* ---------- MODAL ---------- */
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:4vh 10px;z-index:50;overflow:auto}
+.ovl.open{display:flex}
+.modal{background:var(--panel);border:2px solid var(--line);border-radius:18px;width:min(640px,100%);padding:18px;position:relative;animation:pop .2s ease-out}
+.modal h3{font-family:Bungee,sans-serif;font-weight:400;margin:0 34px 10px 0;font-size:20px;color:var(--yel)}
+.modal .x{position:absolute;right:10px;top:10px;background:none;border:none;font-size:24px}
+.modal label{display:block;font-size:13px;color:var(--mut);font-weight:700;margin:12px 0 4px}
+.modal input[type=text]{width:100%;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:16px}
+.modal input[type=text]:focus{outline:none;border-color:var(--yel)}
+.inrow{display:flex;gap:8px}
+.inrow input{flex:1}
+.bigcar{height:110px;text-align:center}
+.bigcar svg{height:100%;width:auto}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.colors button{width:34px;height:34px;border-radius:50%;border:3px solid transparent}
+.colors button.on{border-color:var(--yel);transform:scale(1.15)}
+.tpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:7px}
+.tpick button{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:7px 4px;font-weight:900;font-size:14px;line-height:1.15}
+.tpick button small{display:block;font-weight:400;font-size:10.5px;color:var(--mut)}
+.tpick button.on{background:var(--grn);color:#062;border-color:#fff}
+.tpick button.on small{color:#063}
+.tpick button.else{border-style:dashed}
+.lpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.lpick button{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:6px;font-weight:900;font-size:13px}
+.lpick button svg{width:100%;height:46px}
+.lpick button .e{font-size:30px;height:46px;line-height:46px;display:block}
+.lpick button small{display:block;font-weight:400;color:var(--mut);font-size:11px}
+.lpick button.on{border-color:var(--yel);background:#3a3420}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{border:none;border-radius:12px;padding:11px 16px;font-weight:900;font-size:15px;background:var(--card);border:1px solid var(--line)}
+.btn.primary{background:var(--yel);color:#111;border:none;box-shadow:0 4px 0 #a88a1c}
+.btn.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #a88a1c}
+.btn.danger{background:transparent;border:1px solid var(--red);color:var(--red)}
+.btn.ok{background:var(--grn);color:#062;border:none}
+.hint{color:var(--mut);font-size:13px}
+.note{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px;border-left:4px solid var(--yel)}
+.shake{animation:shake .35s}
+.grp{margin:10px 0}
+.grp b{display:block;margin-bottom:4px}
+
+/* ---------- TOAST + DRIVE ---------- */
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(200px);visibility:hidden;background:var(--yel);color:#111;font-weight:900;padding:12px 18px;border-radius:14px;box-shadow:0 6px 0 rgba(0,0,0,.4);z-index:80;transition:transform .3s cubic-bezier(.3,1.6,.6,1);max-width:92vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
+.drive{position:fixed;left:0;bottom:70px;width:200px;height:120px;z-index:70;pointer-events:none;animation:driveby 1.9s cubic-bezier(.5,0,.6,1) forwards}
+.drive svg{width:200px;height:110px}
+.drive .wheel{animation:spin .25s linear infinite}
+.drive .paper{position:absolute;top:-18px;left:70px;font-size:34px;animation:flap .2s infinite alternate}
+.puff{position:fixed;bottom:80px;width:26px;height:26px;border-radius:50%;background:#bbb;opacity:.7;z-index:69;pointer-events:none;animation:puff .9s ease-out forwards}
+
+footer{color:var(--mut);font-size:12px;text-align:center;margin-top:30px}
+footer a{color:var(--mut)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wobble{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes bounce{to{transform:translateY(-6px)}}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes driveby{from{transform:translateX(-220px)}to{transform:translateX(calc(100vw + 40px))}}
+@keyframes flap{to{transform:rotate(-14deg) translateY(-4px)}}
+@keyframes puff{to{transform:scale(2.6) translateX(-30px);opacity:0}}
+@media (max-width:520px){
+  .lot-grid{grid-template-columns:repeat(2,1fr);gap:9px}
+  .lot{background:var(--asphalt)}
+  .spot .carbox{height:64px}
+  .tgrid{grid-template-columns:repeat(3,1fr)}
+  .status{order:3}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">📋</div>
+      <div>
+        <h1>GDZIE JEST PERMIT?!</h1>
+        <div class="sub">Walcz Wind Park · bo permit sam nie chodzi… chyba</div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <span class="status" id="status">⏳ ładuję…</span>
+      <button class="icobtn" id="btnSound" title="Dźwięk">🔊</button>
+      <button class="icobtn" id="btnSettings" title="Ustawienia wspólnej bazy">⚙️</button>
+      <button class="panic" id="btnPanic">😱 NIE WIEM GDZIE JEST!</button>
+    </div>
+  </header>
+
+  <div class="ticker"><b>💡 BHP-owa mądrość:</b><span id="tip"></span></div>
+
+  <div class="search">
+    <input id="q" type="search" placeholder="🔍 Szukaj: turbina (np. WTG12 / 98314), nr auta albo nr permitu…" autocomplete="off">
+  </div>
+
+  <h2 class="sec">🅿️ Plac z autami <small>kliknij auto → zaznacz, permity których turbin w nim leżą</small></h2>
+  <div class="lot"><div class="lot-grid" id="lot"></div></div>
+
+  <h2 class="sec">🌀 Turbiny <small>kliknij turbinę → wskaż, gdzie jest jej permit</small></h2>
+  <div class="tgrid" id="turbines"></div>
+
+  <h2 class="sec">📜 Kronika permitowa <small>kto, co, gdzie i kiedy</small></h2>
+  <div class="log" id="log"></div>
+
+  <footer>Gdzie jest PERMIT?! · FW Wałcz · zrobione z miłości do papierologii ❤️ ·
+    <a href="#" id="lnkShare">udostępnij ekipie</a></footer>
+</div>
+
+<div class="ovl" id="ovl"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ================== DANE ================== */
+const TURBINES = [
+  ["WTG01","98299","001"],["WTG02","98298","002"],["WTG03","98297","003"],["WTG06","98296","006"],
+  ["WTG07","98295","007"],["WTG10","98303","010"],["WTG11","99359","011"],["WTG12","98314","012"],
+  ["WTG13","98310","013"],["WTG14","98304","014"],["WTG15","98309","015"],["WTG16","98308","016"],
+  ["WTG17","98302","017"],["WTG18","98313","018"],["WTG19","98312","019"],["WTG20","98311","020"],
+  ["WTG23","98300","023"],["WTG24","98305","024"],["WTG25","98301","025"],["WTG26","98306","026"],
+  ["WTG27","98307","027"]
+];
+const TMAP = Object.fromEntries(TURBINES.map(t=>[t[0],t]));
+const PLACES = {
+  kontener:{emoji:"📦",label:"Kontener / biuro"},
+  turbina:{emoji:"🌀",label:"Na turbinie (w pracy)"},
+  kierownik:{emoji:"🧔",label:"U kierownika"}
+};
+const COLORS = ["#f5f5f5","#ffd23f","#ff5a5f","#4da3ff","#3ddc84","#ff8a3d","#b57bff","#9aa6b2","#ff7eb6","#2d3a4a"];
+const NICKS = ["Biała Strzała","Turbo Busik","Rakieta z Wałcza","Grzmot","Ślimak Wyścigowy","Kapsel","Pan Dostawczak",
+  "Błotniak","Szybki Zdzisiek","Żółta Furia","Wiatrołap","Kombajn","Torpeda","Rumak","Puszka Sardynek","Śmieciarz Deluxe",
+  "Mały Hubert","Kosiarka","Bolid","Beczka","Kolejka do Żabki","Tirek","Pirat Drogowy","Dziadek Mróz"];
+const TIPS = [
+  "Permit to nie podkładka pod kawę ☕",
+  "Permit w kieszeni kurtki = permit w praniu 🧺",
+  "Deska rozdzielcza w słońcu to nie sejf ☀️",
+  "Jak zabierasz permit — kliknij. Zajmuje 3 sekundy, szukanie zajmuje 3 godziny ⏱️",
+  "Permit nie ma GPS-a. Ty masz tę apkę 📱",
+  "Kierownik pyta „gdzie permit?” średnio 14 razy dziennie 📈",
+  "Schowek pod fotelem: najczęstsze miejsce zaginięć od 1997 roku 🕳️",
+  "Najlepszy permit to permit, który ktoś wpisał 🏆",
+  "Wiatr wieje, permit leci. Trzymaj mocno 🌬️",
+  "Zamknięty permit oddaj i odklikaj ✅"
+];
+const MSG_SAVE = [
+  "Zapisane! Teraz nikt nie powie, że nie wiedział 😎",
+  "Permit zaparkowany 🅿️",
+  "Brawo! Kierownik uronił łezkę szczęścia 🥲",
+  "Permit odnaleziony szybciej niż kluczyki 🔑",
+  "Papierologia pod kontrolą 📋✅",
+  "Jesteś bohaterem budowy 🦸",
+  "Biurokracja pokonana jednym kliknięciem 💪",
+  "Wpisane. Możesz iść na drożdżówkę 🥐"
+];
+const MSG_PANIC = [
+  "Spokojnie. Oddychaj. Sprawdź w drzwiach od strony pasażera 🚪",
+  "Ostatnio widziany pod kanapką z Żabki 🥪",
+  "Zajrzyj do schowka. Nie, do tego drugiego schowka 🕵️",
+  "Może jest w teczce, którą „na chwilę” odłożyłeś na dach auta? 😬",
+  "Sprawdź listę poniżej — tu jest wszystko, co ekipa wpisała 👇",
+  "Statystycznie jest w aucie kolegi, który właśnie pojechał na drugi koniec farmy 🚐💨",
+  "Zadzwoń do kolegi. On też nie wie. Ale razem będzie raźniej 📞"
+];
+
+/* ================== POMOCNICZE ================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+function ago(ts){
+  if(!ts) return "";
+  const s = (Date.now()-ts)/1000;
+  if(s < 60) return "przed chwilą";
+  if(s < 3600) return Math.floor(s/60)+" min temu";
+  if(s < 86400) return Math.floor(s/3600)+" h temu";
+  const d = Math.floor(s/86400); return d+(d===1?" dzień":" dni")+" temu";
+}
+function hhmm(ts){
+  const d = new Date(ts), today = new Date().toDateString() === d.toDateString();
+  return (today ? "" : d.toLocaleDateString("pl-PL",{day:"2-digit",month:"2-digit"})+" ") +
+         d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"});
+}
+const ls = {
+  get(k,d=null){ try{ const v = localStorage.getItem(k); return v===null ? d : v; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+const me = () => ls.get("permit_who","");
+
+/* ================== MAGAZYN (Firebase REST albo lokalnie) ================== */
+const Store = {
+  base:null, data:{cars:{},permits:{},log:{}}, lastJson:"", online:null, syncedAt:0,
+  init(){
+    const p = new URLSearchParams(location.search).get("db");
+    if(p){ ls.set("permit_db", p); history.replaceState(null,"",location.pathname); }
+    this.setUrl(ls.get("permit_db","") || window.PERMIT_DB_URL || "");
+  },
+  setUrl(u){
+    u = (u||"").trim().replace(/\/+$/,"").replace(/\.json$/,"");
+    this.url = /^https:\/\/[^\s"'<>]+$/.test(u) ? u : "";
+    this.base = this.url ? this.url + "/permitApp" : null;
+  },
+  get remote(){ return !!this.base; },
+  norm(d){ d = d || {}; d.cars = d.cars||{}; d.permits = d.permits||{}; d.log = d.log||{}; return d; },
+  async load(){
+    let d;
+    if(this.remote){
+      const r = await fetch(this.base + ".json", {cache:"no-store"});
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      d = await r.json();
+      this.online = true; this.syncedAt = Date.now();
+    } else {
+      try{ d = JSON.parse(ls.get("permit_local","null")); }catch(e){ d = null; }
+    }
+    d = this.norm(d);
+    const j = JSON.stringify(d), changed = j !== this.lastJson;
+    this.lastJson = j; this.data = d;
+    return changed;
+  },
+  async set(path, val){
+    const parts = path.split("/"); let o = this.data;
+    for(let i=0;i<parts.length-1;i++){ o[parts[i]] = o[parts[i]] || {}; o = o[parts[i]]; }
+    if(val === null) delete o[parts[parts.length-1]]; else o[parts[parts.length-1]] = val;
+    this.lastJson = JSON.stringify(this.data);
+    if(this.remote){
+      const r = await fetch(`${this.base}/${path}.json`, {method:"PUT", body:JSON.stringify(val)});
+      if(!r.ok){ this.online = false; throw new Error("HTTP " + r.status); }
+      this.online = true; this.syncedAt = Date.now();
+    } else {
+      ls.set("permit_local", JSON.stringify(this.data));
+    }
+  },
+  async log(e){
+    e.at = Date.now();
+    await this.set("log/" + uid("l"), e);
+    const ids = Object.keys(this.data.log).sort((a,b)=>(this.data.log[a].at||0)-(this.data.log[b].at||0));
+    for(const id of ids.slice(0, Math.max(0, ids.length-150))) await this.set("log/"+id, null);
+  }
+};
+
+/* ================== GRAFIKI ================== */
+function shade(hex, f){
+  const n = parseInt(hex.slice(1),16);
+  const c = [n>>16, (n>>8)&255, n&255].map(v => Math.max(0,Math.min(255,Math.round(v*f))));
+  return "#" + c.map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+function carSVG(color="#f5f5f5", num="", mood="happy"){
+  const dark = shade(color, .72);
+  const mouth = mood==="sad"
+    ? '<path d="M101 47 Q106 43 111 47" stroke="#111" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    : '<path d="M100 44 Q106 50 112 44" stroke="#111" stroke-width="2.2" fill="#c0392b" stroke-linecap="round"/>';
+  return `<svg viewBox="0 0 124 72" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="62" cy="66" rx="54" ry="4" fill="rgba(0,0,0,.35)"/>
+    <path d="M6 54 V22 Q6 12 16 12 H78 Q85 12 90 19 L103 33 H110 Q118 33 118 41 V54 Z" fill="${color}" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="6" y="40" width="112" height="6" fill="${dark}"/>
+    <rect x="14" y="18" width="26" height="14" rx="3" fill="#9fd3ff" stroke="#111" stroke-width="2"/>
+    <rect x="44" y="18" width="26" height="14" rx="3" fill="#9fd3ff" stroke="#111" stroke-width="2"/>
+    <path d="M77 18 H86 L99 33 H77 Z" fill="#bfe3ff" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="85" cy="25" r="4.6" fill="#fff" stroke="#111" stroke-width="1.5"/><circle cx="86.2" cy="25.6" r="2.1" fill="#111"/>
+    <circle cx="94" cy="28" r="4" fill="#fff" stroke="#111" stroke-width="1.5"/><circle cx="95" cy="28.6" r="1.8" fill="#111"/>
+    <path d="M80 19 L89 21" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
+    ${mouth}
+    <circle cx="115" cy="37" r="2.6" fill="#ffe680" stroke="#111" stroke-width="1"/>
+    <rect x="40" y="35" width="34" height="13" rx="2" fill="#fff" stroke="#111" stroke-width="1.6"/>
+    <rect x="40" y="35" width="5" height="13" rx="1" fill="#2a5bd7"/>
+    <text x="59.5" y="45.5" font-family="Nunito,Arial" font-weight="900" font-size="9.5" text-anchor="middle" fill="#111">${esc(String(num).slice(0,7))}</text>
+    <g class="wheel" style="transform-origin:28px 55px"><circle cx="28" cy="55" r="9.5" fill="#222" stroke="#111" stroke-width="2"/><circle cx="28" cy="55" r="4" fill="#bbb"/><path d="M28 47 V51" stroke="#bbb" stroke-width="2"/></g>
+    <g class="wheel" style="transform-origin:96px 55px"><circle cx="96" cy="55" r="9.5" fill="#222" stroke="#111" stroke-width="2"/><circle cx="96" cy="55" r="4" fill="#bbb"/><path d="M96 47 V51" stroke="#bbb" stroke-width="2"/></g>
+  </svg>`;
+}
+function turbineSVG(){
+  return `<svg class="tb" viewBox="0 0 44 52" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.5 18 L19 51 H25 L23.5 18 Z" fill="#dfe6ec"/>
+    <rect x="18" y="13" width="9" height="6" rx="2" fill="#dfe6ec"/>
+    <g class="rotor">
+      <path d="M22 16 L20.5 2 Q22 0 23.5 2 Z" fill="#fff"/>
+      <path d="M22 16 L20.5 2 Q22 0 23.5 2 Z" fill="#fff" transform="rotate(120 22 16)"/>
+      <path d="M22 16 L20.5 2 Q22 0 23.5 2 Z" fill="#fff" transform="rotate(240 22 16)"/>
+      <circle cx="22" cy="16" r="2.4" fill="#ffd23f"/>
+    </g>
+  </svg>`;
+}
+
+/* ================== STAN UI ================== */
+let Q = "";
+const cars = () => Object.entries(Store.data.cars).map(([id,c])=>({id,...c}))
+  .sort((a,b)=>String(a.num).localeCompare(String(b.num),"pl",{numeric:true}));
+const permitsAt = loc => Object.entries(Store.data.permits).filter(([,p])=>p.loc===loc).map(([t])=>t).sort();
+function locLabel(loc){
+  if(PLACES[loc]) return PLACES[loc].emoji + " " + PLACES[loc].label;
+  const c = Store.data.cars[loc];
+  return c ? `🚐 Auto ${c.num}${c.nick ? " „"+c.nick+"”" : ""}` : "❓ nieznane auto";
+}
+function shortLoc(loc){
+  if(PLACES[loc]) return PLACES[loc].label;
+  const c = Store.data.cars[loc]; return c ? "Auto " + c.num : "???";
+}
+function turbineMatch(tid, q){
+  const t = TMAP[tid], p = Store.data.permits[tid];
+  const hay = [t[0], t[1], t[2], "wtg"+Number(t[2]), p&&p.nr, p&&shortLoc(p.loc)].join(" ").toLowerCase();
+  return hay.includes(q);
+}
+function carMatch(c, q){
+  const hay = [c.num, c.nick, ...permitsAt(c.id).map(t => TMAP[t] ? TMAP[t].join(" ") : t)].join(" ").toLowerCase();
+  return hay.includes(q);
+}
+
+/* ================== RENDER ================== */
+function render(){ renderLot(); renderTurbines(); renderLog(); renderStatus(); }
+
+function renderLot(){
+  const q = Q;
+  let h = cars().map(c=>{
+    const ts = permitsAt(c.id), hit = q && carMatch(c,q);
+    return `<div class="spot ${hit?"hit":""} ${q&&!hit?"dim":""}" data-car="${esc(c.id)}" role="button" tabindex="0">
+      ${ts.length ? `<div class="papers" title="${ts.length} permit(y)">📋${ts.length>1?"×"+ts.length:""}</div>` : ""}
+      <div class="carbox">${carSVG(c.color, c.num, ts.length?"happy":"sad")}</div>
+      <div class="nm">Auto ${esc(c.num)}</div>
+      <div class="nick">${esc(c.nick||"")}</div>
+      <div class="chips">${ts.length ? ts.map(t=>`<span class="chip">${esc(t)}</span>`).join("") : '<span class="chip empty">pusto 🤷</span>'}</div>
+    </div>`;
+  }).join("");
+  h += Object.entries(PLACES).map(([k,pl])=>{
+    const ts = permitsAt(k); if(!ts.length && q) return "";
+    const hit = q && ts.some(t=>turbineMatch(t,q));
+    return `<div class="spot place ${hit?"hit":""} ${q&&!hit?"dim":""}" data-place="${k}" role="button" tabindex="0">
+      <div class="emo">${pl.emoji}</div><div class="nm">${esc(pl.label)}</div><div class="nick">&nbsp;</div>
+      <div class="chips">${ts.length ? ts.map(t=>`<span class="chip">${esc(t)}</span>`).join("") : '<span class="chip empty">pusto</span>'}</div>
+    </div>`;
+  }).join("");
+  h += `<div class="spot add" id="addCar" role="button" tabindex="0"><div class="plus">＋</div>Dodaj auto na plac</div>`;
+  $("#lot").innerHTML = h;
+}
+
+function renderTurbines(){
+  const q = Q;
+  $("#turbines").innerHTML = TURBINES.map(([id,ser,no])=>{
+    const p = Store.data.permits[id], c = p && Store.data.cars[p.loc];
+    const hit = q && turbineMatch(id,q);
+    let where = '<span class="none">nikt nie wpisał 🙈</span>';
+    if(p) where = (c ? carSVG(c.color,c.num) : `<span style="font-size:18px">${PLACES[p.loc]?PLACES[p.loc].emoji:"❓"}</span>`) + `<span>${esc(shortLoc(p.loc))}</span>`;
+    return `<button class="tcard ${p?"has":""} ${hit?"hit":""} ${q&&!hit?"dim":""}" data-t="${id}">
+      ${hit?'<div class="here">TU JEST! 👇</div>':""}
+      ${turbineSVG()}
+      <div class="tname">${id}</div>
+      <div class="tser">${ser} · ${no}</div>
+      <div class="tloc">${where}</div>
+      ${p ? `<div class="ago">${p.nr?"📄 "+esc(p.nr)+" · ":""}${ago(p.at)}${p.by?" · "+esc(p.by):""}</div>` : ""}
+    </button>`;
+  }).join("");
+}
+
+function renderLog(){
+  const items = Object.values(Store.data.log).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,40);
+  $("#log").innerHTML = items.length ? items.map(e=>{
+    const who = `<b>${esc(e.by || "Anonimowy ninja 🥷")}</b>`;
+    let txt = "";
+    if(e.type==="move") txt = `${who}: permit <b>${esc(e.t)}</b> → ${esc(locLabel(e.loc))}${e.from&&e.from!==e.loc?` <span class="hint">(wcześniej: ${esc(shortLoc(e.from))})</span>`:""}`;
+    else if(e.type==="close") txt = `${who}: permit <b>${esc(e.t)}</b> zamknięty / oddany ✅`;
+    else if(e.type==="car") txt = `${who}: na plac wjechało <b>Auto ${esc(e.num)}</b> 🚐💨`;
+    else if(e.type==="cardel") txt = `${who}: <b>Auto ${esc(e.num)}</b> odjechało w siną dal 👋`;
+    else txt = esc(e.txt||"");
+    return `<div><time>${hhmm(e.at)}</time>${txt}</div>`;
+  }).join("") : '<div class="hint">Cisza jak na farmie przy flaucie. Wpisz pierwszy permit! 🌬️</div>';
+}
+
+function renderStatus(){
+  const s = $("#status");
+  if(!Store.remote){ s.textContent = "🟡 Tryb lokalny – tylko ten telefon"; s.title = "Kliknij ⚙️ i wklej adres wspólnej bazy"; }
+  else if(Store.online===false){ s.textContent = "🔴 Brak połączenia z bazą"; }
+  else if(Store.online){ s.textContent = "🟢 Wspólna baza · " + hhmm(Store.syncedAt); s.title = "Dane widzi cała ekipa"; }
+  else s.textContent = "⏳ łączę…";
+}
+
+/* ================== MODALE ================== */
+function openModal(html){
+  $("#modal").innerHTML = `<button class="x" data-close>✕</button>` + html;
+  $("#ovl").classList.add("open");
+}
+function closeModal(){ $("#ovl").classList.remove("open"); $("#modal").innerHTML = ""; }
+$("#ovl").addEventListener("click", e=>{ if(e.target.id==="ovl" || e.target.closest("[data-close]")) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+const modalOpen = () => $("#ovl").classList.contains("open");
+
+function whoField(){
+  return `<label>Kto wpisuje? (zapamiętam)</label><input type="text" id="f_who" value="${esc(me())}" placeholder="Twoje imię, np. Janek">`;
+}
+function saveWho(){ const w = ($("#f_who")?.value||"").trim(); if(w) ls.set("permit_who", w); return w; }
+
+/* --- auto: dodaj / edytuj + zaznacz turbiny --- */
+function openCar(id){
+  const isNew = !id;
+  const c = isNew ? {num:"", nick:rnd(NICKS), color:rnd(COLORS)} : {...Store.data.cars[id]};
+  if(!c) return;
+  const sel = new Set(isNew ? [] : permitsAt(id));
+  const draw = () => { $("#bigcar").innerHTML = carSVG(c.color, $("#f_num").value || "???", sel.size?"happy":"sad"); };
+  openModal(`
+    <h3>${isNew ? "🚐 Nowe auto na placu" : "🚐 Auto " + esc(c.num)}</h3>
+    <div class="bigcar" id="bigcar"></div>
+    <label>Numer auta (np. 797, rejestracja, nr floty)</label>
+    <input type="text" id="f_num" value="${esc(c.num)}" maxlength="10" placeholder="np. 797">
+    <label>Ksywka auta</label>
+    <div class="inrow"><input type="text" id="f_nick" value="${esc(c.nick||"")}" maxlength="24"><button class="btn" id="f_dice" title="Losuj">🎲</button></div>
+    <label>Kolor</label>
+    <div class="colors">${COLORS.map(k=>`<button style="background:${k}" data-col="${k}" class="${k===c.color?"on":""}"></button>`).join("")}</div>
+    <label>📋 Permity których turbin są w tym aucie? (klikaj, można kilka)</label>
+    <div class="tpick">${TURBINES.map(([t,ser])=>{
+      const p = Store.data.permits[t], elsewhere = p && p.loc !== id;
+      return `<button data-tp="${t}" class="${sel.has(t)?"on":""} ${elsewhere?"else":""}" title="${elsewhere?"Teraz: "+esc(shortLoc(p.loc)):""}">${t}<small>${elsewhere?"teraz: "+esc(shortLoc(p.loc)):ser}</small></button>`;
+    }).join("")}</div>
+    <p class="hint">Przerywana ramka = permit jest teraz gdzie indziej. Kliknięcie przeniesie go do tego auta.</p>
+    ${whoField()}
+    <div class="row">
+      <button class="btn primary" id="f_save">${isNew ? "Wjeżdżaj na plac! 🚐💨" : "Zapisz 💾"}</button>
+      ${isNew ? "" : '<button class="btn danger" id="f_del">Usuń auto z placu</button>'}
+    </div>`);
+  draw();
+  $("#f_num").addEventListener("input", draw);
+  $("#f_dice").onclick = () => { $("#f_nick").value = rnd(NICKS); };
+  $("#modal").querySelectorAll("[data-col]").forEach(b => b.onclick = () => {
+    c.color = b.dataset.col; $("#modal").querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on", x===b)); draw();
+  });
+  $("#modal").querySelectorAll("[data-tp]").forEach(b => b.onclick = () => {
+    const t = b.dataset.tp; sel.has(t) ? sel.delete(t) : sel.add(t); b.classList.toggle("on", sel.has(t)); draw();
+  });
+  $("#f_save").onclick = async () => {
+    const num = $("#f_num").value.trim();
+    if(!num){ $("#f_num").classList.add("shake"); $("#f_num").focus(); setTimeout(()=>$("#f_num").classList.remove("shake"),400); toast("Auto bez numeru to jak permit bez podpisu 😅"); return; }
+    const by = saveWho();
+    const cid = id || uid("c");
+    try{
+      await Store.set("cars/"+cid, {num, nick:$("#f_nick").value.trim(), color:c.color, at:Date.now()});
+      if(isNew) await Store.log({type:"car", num, by});
+      const before = new Set(isNew ? [] : permitsAt(cid));
+      let added = 0;
+      for(const t of sel){
+        const p = Store.data.permits[t];
+        if(p && p.loc === cid) continue;
+        await Store.set("permits/"+t, {loc:cid, nr:(p&&p.nr)||"", by, at:Date.now()});
+        await Store.log({type:"move", t, loc:cid, from:p?p.loc:null, by}); added++;
+      }
+      for(const t of before){ if(!sel.has(t)){
+        await Store.set("permits/"+t, null);
+        await Store.log({type:"close", t, by});
+      }}
+      closeModal(); render();
+      if(added) driveBy(c.color, num); else honk(1);
+      toast(added ? rnd(MSG_SAVE) : (isNew ? "Auto " + num + " zaparkowane 🅿️" : "Zapisane 👍"));
+    }catch(err){ toast("Ups, nie zapisało się 😵 (" + err.message + ")"); }
+  };
+  if(!isNew){
+    let armed = false;
+    $("#f_del").onclick = async () => {
+      if(!armed){ armed = true; $("#f_del").textContent = "Na pewno? Kliknij jeszcze raz 🫣"; return; }
+      const by = saveWho();
+      try{
+        for(const t of permitsAt(id)){ await Store.set("permits/"+t, null); await Store.log({type:"close", t, by}); }
+        await Store.set("cars/"+id, null);
+        await Store.log({type:"cardel", num:c.num, by});
+        closeModal(); render(); toast("Auto odjechało. Pa pa! 👋");
+      }catch(err){ toast("Ups 😵 " + err.message); }
+    };
+  }
+}
+
+/* --- turbina: gdzie jest jej permit --- */
+function openTurbine(tid){
+  const t = TMAP[tid], p = Store.data.permits[tid] || {};
+  let sel = p.loc || null;
+  const cs = cars();
+  openModal(`
+    <h3>🌀 ${tid} <span style="font-family:Nunito,sans-serif;font-size:14px;color:var(--mut)">${t[1]} · ${t[2]}</span></h3>
+    <div class="note">Teraz: <b>${p.loc ? esc(locLabel(p.loc)) : "nikt nie wie 🙈"}</b>${p.at?` <span class="hint">· ${ago(p.at)}${p.by?", wpisał(a) "+esc(p.by):""}</span>`:""}${p.note?`<br>📝 ${esc(p.note)}`:""}</div>
+    <label>Gdzie jest permit tej turbiny? 👇</label>
+    <div class="lpick">
+      ${cs.map(c=>`<button data-loc="${esc(c.id)}" class="${sel===c.id?"on":""}">${carSVG(c.color,c.num)}Auto ${esc(c.num)}<small>${esc(c.nick||"")}</small></button>`).join("")}
+      ${Object.entries(PLACES).map(([k,pl])=>`<button data-loc="${k}" class="${sel===k?"on":""}"><span class="e">${pl.emoji}</span>${esc(pl.label)}</button>`).join("")}
+      <button data-newcar><span class="e">＋</span>Nowe auto</button>
+    </div>
+    <label>Numer permitu (opcjonalnie)</label>
+    <input type="text" id="f_nr" value="${esc(p.nr||"")}" placeholder="np. PTW 042">
+    <label>Notatka (opcjonalnie)</label>
+    <input type="text" id="f_note" value="${esc(p.note||"")}" placeholder="np. w schowku pod fotelem kierowcy">
+    ${whoField()}
+    <div class="row">
+      <button class="btn primary" id="f_save">Zapisz 💾</button>
+      ${p.loc ? '<button class="btn ok" id="f_close">Permit zamknięty / oddany ✅</button>' : ""}
+    </div>`);
+  $("#modal").querySelectorAll("[data-loc]").forEach(b => b.onclick = () => {
+    sel = b.dataset.loc; $("#modal").querySelectorAll("[data-loc]").forEach(x=>x.classList.toggle("on", x===b));
+  });
+  $("#modal").querySelector("[data-newcar]").onclick = () => openCar(null);
+  $("#f_save").onclick = async () => {
+    if(!sel){ $(".lpick").classList.add("shake"); setTimeout(()=>$(".lpick").classList.remove("shake"),400); toast("Kliknij, gdzie jest permit 👆"); return; }
+    const by = saveWho();
+    try{
+      await Store.set("permits/"+tid, {loc:sel, nr:$("#f_nr").value.trim(), note:$("#f_note").value.trim(), by, at:Date.now()});
+      await Store.log({type:"move", t:tid, loc:sel, from:p.loc||null, by});
+      closeModal(); render();
+      const c = Store.data.cars[sel];
+      if(c && sel !== p.loc) driveBy(c.color, c.num); else honk(1);
+      toast(rnd(MSG_SAVE));
+    }catch(err){ toast("Ups, nie zapisało się 😵 (" + err.message + ")"); }
+  };
+  if(p.loc) $("#f_close").onclick = async () => {
+    const by = saveWho();
+    try{
+      await Store.set("permits/"+tid, null);
+      await Store.log({type:"close", t:tid, by});
+      closeModal(); render(); toast("Permit zamknięty. Należy Ci się kawa ☕");
+    }catch(err){ toast("Ups 😵 " + err.message); }
+  };
+}
+
+/* --- miejsce (kontener itd.) --- */
+function openPlace(k){
+  const ts = permitsAt(k), pl = PLACES[k];
+  openModal(`<h3>${pl.emoji} ${esc(pl.label)}</h3>
+    ${ts.length ? ts.map(t=>{ const p = Store.data.permits[t];
+      return `<div class="note"><b>${t}</b>${p.nr?" · 📄 "+esc(p.nr):""} <span class="hint">· ${ago(p.at)}${p.by?", "+esc(p.by):""}</span>${p.note?"<br>📝 "+esc(p.note):""}
+      <div class="row" style="margin-top:6px"><button class="btn" data-open="${t}">Przenieś / zmień</button></div></div>`; }).join("")
+      : '<p class="hint">Pusto. Nawet kurz się nudzi.</p>'}
+    <p class="hint">Żeby coś tu dodać — kliknij turbinę na liście poniżej placu i wybierz „${esc(pl.label)}”.</p>`);
+  $("#modal").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openTurbine(b.dataset.open));
+}
+
+/* --- panika --- */
+function openPanic(){
+  honk(3);
+  const groups = {};
+  for(const [t,p] of Object.entries(Store.data.permits)) (groups[p.loc] = groups[p.loc] || []).push(t);
+  const missing = TURBINES.map(t=>t[0]).filter(t=>!Store.data.permits[t]);
+  openModal(`<h3>😱 SPOKOJNIE!</h3>
+    <div class="note" style="font-size:16px">${esc(rnd(MSG_PANIC))}</div>
+    <label>Gdzie co jest (wg ekipy):</label>
+    ${Object.keys(groups).length ? Object.entries(groups).map(([loc,ts])=>`<div class="grp"><b>${esc(locLabel(loc))}</b><div class="chips" style="justify-content:flex-start">${ts.sort().map(t=>`<span class="chip">${t}</span>`).join("")}</div></div>`).join("")
+      : '<p class="hint">Nikt jeszcze nic nie wpisał. To wyjaśnia panikę. 🙃</p>'}
+    ${missing.length ? `<label>Turbiny bez wpisu (permit zamknięty… albo ktoś zapomniał kliknąć 👀)</label><div class="chips" style="justify-content:flex-start">${missing.map(t=>`<span class="chip empty" style="border:1px solid var(--line);border-radius:6px">${t}</span>`).join("")}</div>` : ""}
+    <div class="row"><button class="btn primary" data-close>Dobra, już mi lepiej 😮‍💨</button></div>`);
+}
+
+/* --- ustawienia wspólnej bazy --- */
+function shareLink(){ return location.origin + location.pathname + (Store.url && !window.PERMIT_DB_URL ? "?db=" + encodeURIComponent(Store.url) : ""); }
+function openSettings(){
+  openModal(`<h3>⚙️ Wspólna baza</h3>
+    <p>Status: <b>${Store.remote ? (Store.online===false ? "🔴 brak połączenia" : "🟢 wspólna baza — widzi cała ekipa") : "🟡 tryb lokalny — tylko to urządzenie"}</b></p>
+    <label>Adres Firebase Realtime Database</label>
+    <input type="text" id="f_db" value="${esc(Store.url||"")}" placeholder="https://xxx-default-rtdb.europe-west1.firebasedatabase.app">
+    <p class="hint">Instrukcja (5 minut, za darmo) jest w README na GitHubie. Adres wklejony tutaj zapamięta się na tym telefonie. Gdy adres jest wpisany w <code>config.js</code>, każdy dostaje go automatycznie.</p>
+    <div class="row">
+      <button class="btn primary" id="f_dbsave">Połącz 🔌</button>
+      <button class="btn" id="f_copy">📋 Kopiuj link dla ekipy</button>
+    </div>
+    <label>Link dla ekipy</label>
+    <input type="text" readonly id="f_link" value="${esc(shareLink())}">`);
+  $("#f_dbsave").onclick = async () => {
+    Store.setUrl($("#f_db").value); ls.set("permit_db", Store.url); Store.online = null; Store.lastJson = "";
+    try{ await Store.load(); toast(Store.remote ? "Połączono! 🎉 Teraz wszyscy widzą to samo" : "Tryb lokalny 🟡"); }
+    catch(e){ Store.online = false; toast("Nie mogę się połączyć 😵 Sprawdź adres i reguły bazy"); }
+    closeModal(); render();
+  };
+  $("#f_copy").onclick = () => copy(shareLink());
+}
+async function copy(txt){
+  try{ await navigator.clipboard.writeText(txt); toast("Link skopiowany — wrzuć go na grupę ekipy 📲"); }
+  catch(e){ $("#f_link") && $("#f_link").select(); toast("Zaznaczyłem link — skopiuj ręcznie ✂️"); }
+}
+
+/* ================== EFEKTY ================== */
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+let soundOn = ls.get("permit_sound","1") === "1";
+function setSoundIcon(){ $("#btnSound").textContent = soundOn ? "🔊" : "🔇"; }
+let actx;
+function honk(n=2){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    for(let i=0;i<n;i++){
+      const t0 = actx.currentTime + i*0.22;
+      [392, 494].forEach(f=>{
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = "square"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.08, t0+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.16);
+        o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0+0.18);
+      });
+    }
+  }catch(e){}
+}
+function driveBy(color, num){
+  honk(2);
+  const d = document.createElement("div");
+  d.className = "drive";
+  d.innerHTML = `<div class="paper">📋</div>` + carSVG(color, num, "happy");
+  document.body.appendChild(d);
+  let k = 0;
+  const iv = setInterval(()=>{
+    const r = d.getBoundingClientRect();
+    const p = document.createElement("div"); p.className = "puff";
+    p.style.left = (r.left + 4) + "px"; document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 900);
+    if(++k > 14) clearInterval(iv);
+  }, 120);
+  setTimeout(()=>d.remove(), 2000);
+}
+function rotateTip(){
+  const s = $("#tip"); s.style.opacity = 0;
+  setTimeout(()=>{ s.textContent = " " + rnd(TIPS); s.style.opacity = 1; }, 400);
+}
+
+/* ================== ZDARZENIA ================== */
+$("#lot").addEventListener("click", e=>{
+  const s = e.target.closest(".spot"); if(!s) return;
+  if(s.id === "addCar") openCar(null);
+  else if(s.dataset.car) openCar(s.dataset.car);
+  else if(s.dataset.place) openPlace(s.dataset.place);
+});
+$("#lot").addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.closest(".spot")) e.target.click(); });
+$("#turbines").addEventListener("click", e=>{ const b = e.target.closest("[data-t]"); if(b) openTurbine(b.dataset.t); });
+$("#q").addEventListener("input", e=>{ Q = e.target.value.trim().toLowerCase(); renderLot(); renderTurbines(); });
+$("#btnPanic").onclick = openPanic;
+$("#btnSettings").onclick = openSettings;
+$("#btnSound").onclick = () => { soundOn = !soundOn; ls.set("permit_sound", soundOn?"1":"0"); setSoundIcon(); if(soundOn) honk(1); };
+$("#lnkShare").onclick = e => { e.preventDefault(); copy(shareLink()); };
+
+/* ================== START ================== */
+async function tick(force){
+  if(modalOpen() && !force) { renderStatus(); return; }
+  try{ const ch = await Store.load(); if(ch || force) render(); else { renderStatus(); renderTurbines(); } }
+  catch(e){ Store.online = false; renderStatus(); }
+}
+Store.init(); setSoundIcon(); rotateTip(); setInterval(rotateTip, 9000);
+render();
+tick(true);
+setInterval(()=>{ if(document.visibilityState === "visible") tick(false); }, 5000);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") tick(false); });
+</script>
+</body>
+</html>
