@@ -260,7 +260,7 @@ footer a{color:var(--mut)}
   <h2 class="sec">🌀 Turbiny <small>kliknij turbinę → wskaż, gdzie jest jej permit</small></h2>
   <div class="tgrid" id="turbines"></div>
 
-  <h2 class="sec">🗺️ Mapa farmy <small>zielone = permit wpisany · auta z GPS Trackunit (co ~15 min)</small></h2>
+  <h2 class="sec">🗺️ Mapa farmy <small>zielone = permit wpisany · szare = brak wpisu</small></h2>
   <div id="map"></div>
   <div class="hint" id="gpsinfo" style="margin-top:6px"></div>
 
@@ -494,7 +494,9 @@ function matchVehicle(numRaw){
   h = V.filter(v => [v.name,v.serial,v.pin].some(x => norm(x).includes(num)));
   return h.length === 1 ? h[0] : null;
 }
+const GPS_ENABLED = false; // Trackunit usunięty – pozycje aut nie są pobierane
 function carPos(c){
+  if(!GPS_ENABLED) return null;
   const v = vehicleFor(c); if(!v) return null;
   if(v.away || typeof v.lat !== "number") return {v, away:true};
   const [e,n] = toUTM33(v.lat, v.lon);
@@ -646,6 +648,7 @@ function renderMap(){
   html += rest.length ? `<div class="mrest">${rest.map(({c,p})=>`<button class="chip" data-car="${esc(c.id)}">🚐 ${esc(c.num)} · ${p.away?"🏠 poza farmą":"🛣️ w trasie, "+fmtDist(p.near.d)+" od "+p.near.t}</button>`).join("")}</div>` : "";
   $("#map").innerHTML = html;
   const m = Store.data.vehiclesMeta || {}, matched = list.filter(x=>x.p).length;
+  if(!GPS_ENABLED){ $("#gpsinfo").innerHTML = "Kliknij turbinę na mapie, żeby wpisać permit albo nawigować. WTG11 nie ma współrzędnych w tabeli."; return; }
   $("#gpsinfo").innerHTML = m.upd
     ? `📡 Trackunit: ${m.ok===false ? "⚠️ błąd ostatniej synchronizacji" : "OK"} · ostatnio ${kiedy(m.upd)} · pojazdów w Trackunit: ${m.count||0} · dopasowanych aut z placu: ${matched}${matched ? "" : " (otwórz auto → 📡 Trackunit)"}`
     : "📡 Trackunit jeszcze nie przysłał pozycji — auta pojawią się na mapie, gdy robot GPS zacznie działać. WTG11 nie ma współrzędnych w tabeli.";
@@ -739,17 +742,11 @@ function openCar(id){
     <h3>${isNew ? "🚐 Nowe auto na placu" : "🚐 Auto " + esc(c.num)}</h3>
     <div class="bigcar" id="bigcar"></div>
     <label>Numer auta (np. 797, rejestracja, nr floty)</label>
-    <input type="text" id="f_num" value="${esc(c.num)}" maxlength="10" placeholder="tak jak w Trackunit, np. 797" list="tu_list" autocomplete="off">
-    <datalist id="tu_list">${Object.values(Store.data.vehicles||{}).map(v=>`<option value="${esc(v.name)}">${esc([v.serial,v.model].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
-    <div class="hint" id="tu_match"></div>
+    <input type="text" id="f_num" value="${esc(c.num)}" maxlength="10" placeholder="np. 797" autocomplete="off">
     <label>Ksywka auta</label>
     <div class="inrow"><input type="text" id="f_nick" value="${esc(c.nick||"")}" maxlength="24"><button class="btn" id="f_dice" title="Losuj">🎲</button></div>
     <label>Kolor</label>
     <div class="colors">${COLORS.map(k=>`<button style="background:${k}" data-col="${k}" class="${k===c.color?"on":""}"></button>`).join("")}</div>
-    <label>📡 Trackunit (GPS)</label>
-    ${tuSelect(c)}
-    <div class="hint" id="tu_pos">${(()=>{ const p = carPos(c); return p ? posLabel(p)+" · "+ago(p.v.at) : ""; })()}</div>
-    ${(()=>{ const p = !isNew && carPos(c); return p && !p.away ? `<div class="row" style="margin-top:8px"><button class="btn" id="f_office">🏢 Tu jest biuro — zapamiętaj to miejsce</button></div>` : ""; })()}
     <label>📋 Permity których turbin są w tym aucie? (klikaj, można kilka)</label>
     <div class="tpick">${TURBINES.map(([t,ser])=>{
       const p = Store.data.permits[t], elsewhere = p && p.loc !== id;
@@ -762,14 +759,7 @@ function openCar(id){
       ${isNew ? "" : '<button class="btn danger" id="f_del">Usuń auto z placu</button>'}
     </div>`);
   draw();
-  const showMatch = () => {
-    const n = $("#f_num").value.trim(), hasV = Object.keys(Store.data.vehicles||{}).length;
-    if(!n || !hasV){ $("#tu_match").innerHTML = hasV ? "" : "📡 Baza Trackunit jeszcze pusta — dopasuję automatycznie, gdy robot przyśle pojazdy."; return; }
-    const v = matchVehicle(n);
-    $("#tu_match").innerHTML = v ? `✅ Trackunit: <b>${esc(v.name)}</b>${v.serial?" · "+esc(v.serial):""}` : "❓ Nie ma takiego numeru w Trackunit (sprawdź pisownię albo wybierz pojazd ręcznie niżej)";
-  };
-  $("#f_num").addEventListener("input", () => { draw(); showMatch(); });
-  showMatch();
+  $("#f_num").addEventListener("input", draw);
   if($("#f_office")) $("#f_office").onclick = async () => {
     const p = carPos(c);
     try{
@@ -791,7 +781,7 @@ function openCar(id){
     const by = saveWho();
     const cid = id || uid("c");
     try{
-      await Store.set("cars/"+cid, {num, nick:$("#f_nick").value.trim(), color:c.color, tu:$("#f_tu").value, at:Date.now()});
+      await Store.set("cars/"+cid, {num, nick:$("#f_nick").value.trim(), color:c.color, at:Date.now()});
       if(isNew) await Store.log({type:"car", num, by});
       const before = new Set(isNew ? [] : permitsAt(cid));
       let added = 0;
